@@ -205,7 +205,7 @@ const AppContent: React.FC = () => {
 
   // Alertas automáticos com dependências estabilizadas - VERSÃO CORRIGIDA
   const alertsRef = useRef<any>(null);
-  const automaticAlerts = useMemo(() => {
+  const _automaticAlerts = useMemo(() => {
     // Criar hash estável para evitar recálculos desnecessários
     const tenantsHash = JSON.stringify(tenants);
     const energyHash = JSON.stringify(energyBills);
@@ -235,7 +235,7 @@ const AppContent: React.FC = () => {
   }, [tenants, energyBills, waterBills]);
 
   // Transações recorrentes com dependências hash
-  const recurringTransactions = useMemo(() => {
+  const _recurringTransactions = useMemo(() => {
     performanceMonitor.startTimer('recurring-transactions');
     const result = processRecurringTransactions(stableTransactionsRef.current);
     performanceMonitor.endTimer('recurring-transactions');
