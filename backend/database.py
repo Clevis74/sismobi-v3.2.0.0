@@ -49,3 +49,8 @@ def get_database() -> AsyncIOMotorDatabase:
     if db.database is None:
         raise Exception("Database not connected")
     return db.database
+
+def get_collection(collection_name: str):
+    """Get collection instance"""
+    database = get_database()
+    return database[collection_name]
