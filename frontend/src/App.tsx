@@ -102,8 +102,8 @@ const AppContent: React.FC = () => {
   const stableTransactionsRef = useRef<Transaction[]>([]);
   
   // Atualizar refs apenas quando dados mudarem estruturalmente - VERSÃO OTIMIZADA
-  const propertiesHashRef = useRef<string>('');
-  const transactionsHashRef = useRef<string>('');
+  const _propertiesHashRef = useRef<string>('');
+  const _transactionsHashRef = useRef<string>('');
   
   // ===== TEMPORARY LOOP FIX - DISABLE PROBLEMATIC USEEFFECTS =====
   // Desabilitando temporariamente useEffects que causam loop infinito
@@ -146,7 +146,7 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     stablePropertiesRef.current = properties;
     stableTransactionsRef.current = transactions;
-  }, []); // Empty dependencies to run only once
+  }, [properties, transactions]); // Added missing dependencies
 
   // Hash para dependências estáveis do useMemo (not used after ref optimization)
   const _propertiesHash = useMemo(() => {
