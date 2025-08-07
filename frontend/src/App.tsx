@@ -201,15 +201,7 @@ const AppContent: React.FC = () => {
     };
     
     return result;
-    performanceMonitor.endTimer('financial-calculation');
-    
-    summaryRef.current = {
-      data: result,
-      hash: currentHash
-    };
-    
-    return result;
-  }, []); // Remove dependencies do ref - ele já tem hash interno para controlar mudanças
+  }, []); // Empty dependencies to prevent re-calculation loops
 
   // Alertas automáticos com dependências estabilizadas - VERSÃO CORRIGIDA
   const alertsRef = useRef<any>(null);
