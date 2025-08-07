@@ -79,6 +79,7 @@ app.include_router(properties_router, prefix=settings.api_prefix)
 app.include_router(tenants_router, prefix=settings.api_prefix)
 app.include_router(transactions_router, prefix=settings.api_prefix)
 app.include_router(alerts_router, prefix=settings.api_prefix)
+app.include_router(reports_router, prefix=settings.api_prefix)
 
 # Root endpoint
 @app.get("/")
