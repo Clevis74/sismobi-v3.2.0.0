@@ -201,7 +201,7 @@ const AppContent: React.FC = () => {
     };
     
     return result;
-  }, []); // Empty dependencies to prevent re-calculation loops
+  }, [properties, transactions]); // Added missing dependencies
 
   // Alertas automáticos com dependências estabilizadas - VERSÃO CORRIGIDA
   const alertsRef = useRef<any>(null);
