@@ -1,84 +1,179 @@
 """
 SISMOBI Backend 3.2.0 - Sistema de Gestão Imobiliária
-Simplified FastAPI server for quick deployment
+Complete FastAPI server with full functionality
 """
-from fastapi import FastAPI
+import uuid
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from datetime import datetime
+import structlog
+
+# Import configurations and database
+from config import settings
+from database import connect_to_mongo, close_mongo_connection, get_database
+from models import DashboardSummary, HealthResponse, MessageResponse, User
+from auth import get_current_active_user, create_user
+from utils import calculate_dashboard_summary
+
+# Import routers
+from routers.auth import router as auth_router
+from routers.properties import router as properties_router
+from routers.tenants import router as tenants_router  
+from routers.transactions import router as transactions_router
+from routers.alerts import router as alerts_router
+
+logger = structlog.get_logger(__name__)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan management"""
+    # Startup
+    logger.info("Starting SISMOBI Backend v3.2.0")
+    try:
+        await connect_to_mongo()
+        
+        # Create default admin user if it doesn't exist
+        try:
+            db = get_database()
+            existing_admin = await db.users.find_one({"email": "admin@sismobi.com"})
+            if not existing_admin:
+                await create_user(db, "admin@sismobi.com", "admin123456", "Admin User")
+                logger.info("Default admin user created")
+        except Exception as e:
+            logger.warning("Could not create default admin user", error=str(e))
+            
+        logger.info("Backend started successfully")
+        yield
+        
+    except Exception as e:
+        logger.error("Failed to start backend", error=str(e))
+        raise
+    finally:
+        # Shutdown
+        logger.info("Shutting down SISMOBI Backend")
+        await close_mongo_connection()
 
 # Create FastAPI application
 app = FastAPI(
     title="SISMOBI API",
-    description="Sistema de Gestão Imobiliária - Backend API",
+    description="Sistema de Gestão Imobiliária - Backend API v3.2.0",
     version="3.2.0",
+    lifespan=lifespan
 )
 
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:5174",
-        "http://localhost:5173"
-    ],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Basic endpoints
+# Include routers
+app.include_router(auth_router, prefix=settings.api_prefix)
+app.include_router(properties_router, prefix=settings.api_prefix)
+app.include_router(tenants_router, prefix=settings.api_prefix)
+app.include_router(transactions_router, prefix=settings.api_prefix)
+app.include_router(alerts_router, prefix=settings.api_prefix)
+
+# Root endpoint
 @app.get("/")
 async def root():
     """Root endpoint"""
     return {
         "message": "SISMOBI API 3.2.0 is running", 
         "status": "active", 
-        "timestamp": datetime.now().isoformat()
-    }
-
-@app.get("/api/health")
-async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "service": "SISMOBI Backend",
-        "version": "3.2.0",
         "timestamp": datetime.now().isoformat(),
-        "database": "connected"
+        "documentation": "/docs"
     }
 
-@app.get("/api/v1/dashboard/summary")
-async def get_dashboard_summary():
-    """Dashboard summary endpoint"""
-    return {
-        "total_properties": 0,
-        "total_tenants": 0,
-        "total_revenue": 0.0,
-        "total_expenses": 0.0,
-        "occupancy_rate": 0.0,
-        "last_updated": datetime.now().isoformat()
-    }
+@app.get("/api/health", response_model=HealthResponse)
+async def health_check(db: AsyncIOMotorDatabase = Depends(get_database)):
+    """Health check endpoint"""
+    try:
+        # Test database connection
+        await db.command('ping')
+        database_status = "connected"
+    except Exception as e:
+        logger.error("Database health check failed", error=str(e))
+        database_status = "disconnected"
+        
+    return HealthResponse(
+        status="healthy" if database_status == "connected" else "degraded",
+        database_status=database_status
+    )
 
-# Mock API endpoints for frontend compatibility
-@app.get("/api/v1/properties")
-async def get_properties():
-    """Get all properties"""
-    return {"data": [], "total": 0}
+@app.get("/api/v1/dashboard/summary", response_model=DashboardSummary)
+async def get_dashboard_summary(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Get comprehensive dashboard summary"""
+    try:
+        summary_data = await calculate_dashboard_summary(db)
+        logger.info("Dashboard summary retrieved", user=current_user.email)
+        return DashboardSummary(**summary_data)
+        
+    except Exception as e:
+        logger.error("Error retrieving dashboard summary", error=str(e), user=current_user.email)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.get("/api/v1/tenants") 
-async def get_tenants():
-    """Get all tenants"""
-    return {"data": [], "total": 0}
-
-@app.get("/api/v1/transactions")
-async def get_transactions():
-    """Get all transactions"""
-    return {"data": [], "total": 0}
-
-@app.get("/api/v1/alerts")
-async def get_alerts():
-    """Get all alerts"""
-    return {"data": [], "total": 0}
+# Initialize endpoint for testing
+@app.post("/api/v1/init", response_model=MessageResponse) 
+async def initialize_system(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
+    """Initialize system with sample data (for testing)"""
+    try:
+        # Create sample properties
+        sample_properties = [
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Apartamento Centro",
+                "address": "Rua das Flores, 123 - Centro",
+                "type": "Apartamento",
+                "size": 75.0,
+                "rooms": 2,
+                "rent_value": 1500.0,
+                "expenses": 200.0,
+                "status": "vacant",
+                "description": "Apartamento moderno no centro da cidade",
+                "tenant_id": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Casa Jardim",
+                "address": "Av. das Palmeiras, 456 - Jardim",
+                "type": "Casa", 
+                "size": 120.0,
+                "rooms": 3,
+                "rent_value": 2500.0,
+                "expenses": 350.0,
+                "status": "vacant",
+                "description": "Casa espaçosa com quintal",
+                "tenant_id": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now()
+            }
+        ]
+        
+        # Insert properties if they don't exist
+        existing_properties = await db.properties.count_documents({})
+        if existing_properties == 0:
+            await db.properties.insert_many(sample_properties)
+            logger.info("Sample properties created")
+        
+        return {"message": "System initialized successfully", "status": "success"}
+        
+    except Exception as e:
+        logger.error("Error initializing system", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to initialize system")
 
 if __name__ == "__main__":
     import uvicorn
