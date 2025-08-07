@@ -120,14 +120,7 @@ const TenantCard = React.memo(({
 
 TenantCard.displayName = 'TenantCard';
 
-export const OptimizedTenantManager: React.FC<{
-  tenants,
-  properties,
-  showValues,
-  onAddTenant,
-  onUpdateTenant,
-  onDeleteTenant
-}> = ({
+export const OptimizedTenantManager: React.FC<TenantManagerProps> = ({
   tenants,
   properties,
   showValues,
