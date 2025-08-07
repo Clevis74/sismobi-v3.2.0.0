@@ -12,13 +12,7 @@ interface _PropertyManagerProps {
   onDeleteProperty: (id: string) => void;
 }
 
-export const PropertyManager: React.FC<{
-  properties,
-  showValues,
-  onAddProperty,
-  onUpdateProperty,
-  onDeleteProperty
-}> = ({
+export const PropertyManager: React.FC<PropertyManagerProps> = ({
   properties,
   showValues,
   onAddProperty,
