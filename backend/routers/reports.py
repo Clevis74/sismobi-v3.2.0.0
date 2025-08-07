@@ -14,7 +14,7 @@ from auth import get_current_user
 from models import User
 from reports import PDFReportGenerator
 
-router = APIRouter(prefix="/api/v1/reports", tags=["reports"])
+router = APIRouter(prefix="/reports", tags=["reports"])
 
 # Instância do gerador de relatórios
 report_generator = PDFReportGenerator()
