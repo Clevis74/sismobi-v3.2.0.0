@@ -173,21 +173,34 @@ const AppContent: React.FC = () => {
     return waterBills.map(b => `${b.id}-${b.groupId}`).join('|');
   }, [waterBills]);
 
-  // Summary com dependências estáveis - VERSÃO CORRIGIDA PARA EVITAR LOOPS
+  // Summary com dependências estáveis - VERSÃO FINAL PARA EVITAR LOOPS
   const summaryRef = useRef<any>(null);
   const summary = useMemo(() => {
-    // Só recalcular se os dados realmente mudaram
-    const currentPropsHash = JSON.stringify(stablePropertiesRef.current);
-    const currentTransHash = JSON.stringify(stableTransactionsRef.current);
-    const previousHash = summaryRef.current?.hash;
-    const currentHash = currentPropsHash + currentTransHash;
+    // Usar os dados diretamente dos estados sem refs problemáticas
+    const currentProperties = properties || [];
+    const currentTransactions = transactions || [];
     
-    if (summaryRef.current && previousHash === currentHash) {
-      return summaryRef.current.data;
+    // Só recalcular se o length mudou (indicativo de mudança real)
+    if (summaryRef.current) {
+      const prevProps = summaryRef.current.lastProps || 0;
+      const prevTrans = summaryRef.current.lastTrans || 0;
+      
+      if (prevProps === currentProperties.length && prevTrans === currentTransactions.length) {
+        return summaryRef.current.data;
+      }
     }
     
     performanceMonitor.startTimer('financial-calculation');
-    const result = calculateFinancialSummary(stablePropertiesRef.current, stableTransactionsRef.current);
+    const result = calculateFinancialSummary(currentProperties, currentTransactions);
+    performanceMonitor.endTimer('financial-calculation');
+    
+    summaryRef.current = {
+      data: result,
+      lastProps: currentProperties.length,
+      lastTrans: currentTransactions.length
+    };
+    
+    return result;
     performanceMonitor.endTimer('financial-calculation');
     
     summaryRef.current = {
