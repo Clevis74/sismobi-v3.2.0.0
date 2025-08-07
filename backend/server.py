@@ -23,6 +23,7 @@ from routers.properties import router as properties_router
 from routers.tenants import router as tenants_router  
 from routers.transactions import router as transactions_router
 from routers.alerts import router as alerts_router
+from routers.reports import router as reports_router
 
 logger = structlog.get_logger(__name__)
 
