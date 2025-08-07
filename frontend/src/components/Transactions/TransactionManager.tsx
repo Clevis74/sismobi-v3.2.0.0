@@ -13,14 +13,7 @@ interface _TransactionManagerProps {
   onDeleteTransaction: (id: string) => void;
 }
 
-export const TransactionManager: React.FC<{
-  transactions,
-  properties,
-  showValues,
-  onAddTransaction,
-  onUpdateTransaction,
-  onDeleteTransaction
-}> = ({
+export const TransactionManager: React.FC<TransactionManagerProps> = ({
   transactions,
   properties,
   showValues,
