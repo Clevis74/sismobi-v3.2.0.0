@@ -1,5 +1,5 @@
 // Lighthouse CI Configuration - SISMOBI v3.2.0
-module.exports = {
+export default {
   ci: {
     // Build configuration
     collect: {
