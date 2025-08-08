@@ -23,7 +23,7 @@ from routers.properties import router as properties_router
 from routers.tenants import router as tenants_router  
 from routers.transactions import router as transactions_router
 from routers.alerts import router as alerts_router
-from routers.reports import router as reports_router
+# from routers.reports import router as reports_router  # Temporarily disabled due to matplotlib deps
 from routers.documents import router as documents_router
 from routers.energy_bills import router as energy_bills_router
 from routers.water_bills import router as water_bills_router
