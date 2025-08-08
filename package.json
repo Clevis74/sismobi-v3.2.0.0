@@ -20,7 +20,14 @@
     "security:audit": "npm audit --audit-level moderate",
     "security:fix": "npm audit fix",
     "pre-commit": "npm run lint && npm run type-check && npm run test:run",
-    "version-check": "echo 'SISMOBI v3.2.0-validation - PHASE 3 COMPLETED: ACCESSIBILITY TESTING SUCCESS' && cat VERSION.md"
+    "version-check": "echo 'SISMOBI v3.2.0-validation - PHASE 4+5 IMPLEMENTATION' && cat VERSION.md",
+    "lighthouse:collect": "lhci collect",
+    "lighthouse:assert": "lhci assert",
+    "lighthouse:upload": "lhci upload",
+    "lighthouse:autorun": "lhci autorun",
+    "lighthouse:server": "lhci server --port=9001",
+    "performance:audit": "npm run build && npm run lighthouse:autorun",
+    "ci:lighthouse": "npm run build && npm run preview & sleep 5 && npm run lighthouse:collect && npm run lighthouse:assert"
   },
   "dependencies": {
     "lucide-react": "^0.344.0",
@@ -28,7 +35,9 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@axe-core/react": "^4.10.2",
     "@eslint/js": "^9.9.1",
+    "@lhci/cli": "^0.12.0",
     "@testing-library/jest-dom": "^6.2.0",
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.2",
@@ -38,11 +47,13 @@
     "@vitest/coverage-v8": "^1.2.0",
     "@vitest/ui": "^1.2.0",
     "autoprefixer": "^10.4.18",
+    "axe-core": "^4.10.3",
     "eslint": "^9.9.1",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.11",
     "globals": "^15.9.0",
     "jsdom": "^24.0.0",
+    "lighthouse": "^11.4.0",
     "postcss": "^8.4.35",
     "prettier": "^3.2.4",
     "tailwindcss": "^3.4.1",
